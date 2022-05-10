@@ -113,7 +113,7 @@ class TelegramApiController extends Controller
         }
 
         // Заполняем дату рождения
-        if (is_null($user['full_name'])) {
+        if (is_null($user['birth_date'])) {
             if (!preg_match('/(\d{2}\/\d{2}\/\d{4})/', $message['text'])) {
                 $this->reply("Вы ввели дату в непривильном формате. Отправьте, пожалуйста, дату ваше рождения в формате - ДД/ММ/ГГГГ.");
             } else {
