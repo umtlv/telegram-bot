@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\City;
 use App\Models\User;
+use DateTime;
 use Illuminate\Http\Request;
 use Telegram\Bot\Api;
 use Telegram\Bot\Exceptions\TelegramSDKException;
@@ -12,6 +13,7 @@ use Telegram\Bot\Keyboard\Keyboard;
 class TelegramApiController extends Controller
 {
     private Api $Telegram;
+    private int $Sender;
 
     public function __construct()
     {
@@ -29,7 +31,8 @@ class TelegramApiController extends Controller
         if (empty($message)) return;
 
         $sender = $message['from']['id'];
-        $user = User::where('telegram_user_id', $sender)->first();
+        $this->Sender = $message['from']['id'];
+        $user = User::where('telegram_user_id', $this->Sender)->first();
 
         // Если пользователя нету в списке и нажата команда - /start
         if (empty($user) && $message['text'] === '/start') {
@@ -45,12 +48,7 @@ class TelegramApiController extends Controller
                 'one_time_keyboard' => true,
                 'resize_keyboard' => true,
             ]);
-            $this->Telegram->sendMessage([
-                'chat_id' => $sender,
-                'text' => "Для начала работы, необходимо зарегистрироваться.<br><br>Пожалуйста, поделитесь вашим номером телефона.",
-                'parse_mode' => 'HTML',
-                'reply_markup' => $keyboard
-            ]);
+            $this->reply("Для начала работы, необходимо зарегистрироваться.<br><br>Пожалуйста, поделитесь вашим номером телефона.", $keyboard);
 
             $user = new User();
             $user->telegram_user_id = $sender;
@@ -65,15 +63,11 @@ class TelegramApiController extends Controller
 
                 $cities = City::select(['title'])->get()->pluck('title');
                 $keyboard = Keyboard::make([
-                   'keyboard' => $cities,
+                    'keyboard' => $cities,
                     'one_time_keyboard' => true,
                     'resize_keyboard' => true,
                 ]);
-                $this->Telegram->sendMessage([
-                    'chat_id' => $sender,
-                    'text' => "Пожалуйста, выберите ваш город.",
-                    'reply_markup' => $keyboard
-                ]);
+                $this->reply("Пожалуйста, выберите ваш город.", $keyboard);
             } else {
                 $keyboard = Keyboard::make([
                     'keyboard' => [
@@ -87,11 +81,7 @@ class TelegramApiController extends Controller
                     'one_time_keyboard' => true,
                     'resize_keyboard' => true,
                 ]);
-                $this->Telegram->sendMessage([
-                    'chat_id' => $sender,
-                    'text' => "Пожалуйста, поделитесь вашим номером телефона.",
-                    'reply_markup' => $keyboard
-                ]);
+                $this->reply("Пожалуйста, поделитесь вашим номером телефона.", $keyboard);
             }
         }
 
@@ -105,22 +95,37 @@ class TelegramApiController extends Controller
                     'one_time_keyboard' => true,
                     'resize_keyboard' => true,
                 ]);
-                $this->Telegram->sendMessage([
-                    'chat_id' => $sender,
-                    'text' => "Данный город не действителен. Пожалуйста, выберите из списка.",
-                    'reply_markup' => $keyboard
-                ]);
+                $this->reply("Данный город не действителен. Пожалуйста, выберите из списка.", $keyboard);
             } else {
                 $user->city_id = $city->id;
                 $user->saveQuietly();
+                $this->reply("Отправьте, пожалуйста, ваше имя и фамилия.", Keyboard::make([
+                    'remove_keyboard' => true
+                ]));
+            }
+        }
 
-                $this->Telegram->sendMessage([
-                    'chat_id' => $sender,
-                    'text' => "Отправьте, пожалуйста, ваше имя и фамилия.",
-                    'reply_markup' => Keyboard::make([
-                        'remove_keyboard' => true
-                    ])
-                ]);
+        // Заполняем имя и фамилия
+        if (is_null($user['full_name'])) {
+            $user->full_name = $message['text'];
+            $user->saveQuietly();
+            $this->reply("Отправьте, пожалуйста, дату ваше рождения в формате - ДД/ММ/ГГГГ.");
+        }
+
+        // Заполняем дату рождения
+        if (is_null($user['full_name'])) {
+            if (!preg_match('/(\d{2}\/\d{2}\/\d{4})/', $message['text'])) {
+                $this->reply("Вы ввели дату в непривильном формате. Отправьте, пожалуйста, дату ваше рождения в формате - ДД/ММ/ГГГГ.");
+            } else {
+                $date = DateTime::createFromFormat('d/m/Y', $message['text']);
+                $errors = DateTime::getLastErrors();
+                if ($errors['warning_count'] === 0) {
+                    $user->full_name = $date->format('Y-m-d');
+                    $user->saveQuietly();
+                    $this->reply("Отправьте, пожалуйста, никнейм. Заполнить латинскими буквами.");
+                } else {
+                    $this->reply("Вы ввели дату в непривильном формате. Отправьте, пожалуйста, дату ваше рождения в формате - ДД/ММ/ГГГГ.");
+                }
             }
         }
 
@@ -131,5 +136,19 @@ class TelegramApiController extends Controller
                 'remove_keyboard' => true
             ])
         ]);
+    }
+
+    /**
+     * @throws TelegramSDKException
+     */
+    private function reply(string $text, Keyboard|null $markup = null)
+    {
+        $params = [
+            'chat_id' => $this->Sender,
+            'text' => $text,
+            'parse_mode' => 'HTML',
+        ];
+        if (!is_null($markup)) $params['reply_markup'] = $markup;
+        $this->Telegram->sendMessage($params);
     }
 }
