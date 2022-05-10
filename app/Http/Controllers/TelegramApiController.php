@@ -47,7 +47,7 @@ class TelegramApiController extends Controller
             ]);
             $this->Telegram->sendMessage([
                 'chat_id' => $sender,
-                'text' => "Для начала работы, необходимо зарегистрироваться.<br><br>Пожалуйста, поделитесь вашим номером телефона",
+                'text' => "Для начала работы, необходимо зарегистрироваться.<br><br>Пожалуйста, поделитесь вашим номером телефона.",
                 'parse_mode' => 'HTML',
                 'reply_markup' => $keyboard
             ]);
@@ -71,7 +71,7 @@ class TelegramApiController extends Controller
                 ]);
                 $this->Telegram->sendMessage([
                     'chat_id' => $sender,
-                    'text' => "Пожалуйста, выберите ваш город",
+                    'text' => "Пожалуйста, выберите ваш город.",
                     'reply_markup' => $keyboard
                 ]);
             } else {
@@ -89,7 +89,7 @@ class TelegramApiController extends Controller
                 ]);
                 $this->Telegram->sendMessage([
                     'chat_id' => $sender,
-                    'text' => "Пожалуйста, поделитесь вашим номером телефона",
+                    'text' => "Пожалуйста, поделитесь вашим номером телефона.",
                     'reply_markup' => $keyboard
                 ]);
             }
@@ -97,17 +97,31 @@ class TelegramApiController extends Controller
 
         // Заполняем город
         if (is_null($user['city_id'])) {
-            $cities = City::select(['title'])->get()->pluck('title');
-            $keyboard = Keyboard::make([
-                'keyboard' => $cities,
-                'one_time_keyboard' => true,
-                'resize_keyboard' => true,
-            ]);
-            $this->Telegram->sendMessage([
-                'chat_id' => $sender,
-                'text' => "Пожалуйста, выберите ваш город",
-                'reply_markup' => $keyboard
-            ]);
+            $city = City::where('title', $message['text'])->first();
+            if (empty($city)) {
+                $cities = City::select(['title'])->get()->pluck('title');
+                $keyboard = Keyboard::make([
+                    'keyboard' => [$cities],
+                    'one_time_keyboard' => true,
+                    'resize_keyboard' => true,
+                ]);
+                $this->Telegram->sendMessage([
+                    'chat_id' => $sender,
+                    'text' => "Данный город не действителен. Пожалуйста, выберите из списка.",
+                    'reply_markup' => $keyboard
+                ]);
+            } else {
+                $user->city_id = $city->id;
+                $user->saveQuietly();
+
+                $this->Telegram->sendMessage([
+                    'chat_id' => $sender,
+                    'text' => "Отправьте, пожалуйста, ваше имя и фамилия.",
+                    'reply_markup' => Keyboard::make([
+                        'remove_keyboard' => true
+                    ])
+                ]);
+            }
         }
 
         $this->Telegram->sendMessage([
