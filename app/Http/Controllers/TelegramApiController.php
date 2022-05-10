@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\City;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Telegram\Bot\Api;
 use Telegram\Bot\Exceptions\TelegramSDKException;
@@ -29,7 +31,12 @@ class TelegramApiController extends Controller
 
         $message = $data['message'];
         if (empty($message)) return;
-        if ($message['text'] === '/start') {
+
+        $sender = $message['from']['id'];
+        $user = User::where('telegram_user_id', $sender)->first();
+
+        // Если пользователя нету в списке и нажата команда - /start
+        if (empty($user) && $message['text'] === '/start') {
             $keyboard = Keyboard::make([
                 'keyboard' => [
                     [
@@ -39,15 +46,57 @@ class TelegramApiController extends Controller
                         ]
                     ]
                 ],
+                'one_time_keyboard' => true,
                 'resize_keyboard' => true,
-                'one_time_keyboard' => true
             ]);
-
             $this->Telegram->sendMessage([
-                'chat_id' => '1327706165',
-                'text' => 'Пожалуйста, поделитесь вашим номером телефона',
+                'chat_id' => $sender,
+                'text' => "Для начала работы, необходимо зарегистрироваться.<br><br>Пожалуйста, поделитесь вашим номером телефона",
                 'reply_markup' => $keyboard
             ]);
+
+            $user = new User();
+            $user->telegram_user_id = $sender;
+            $user->saveQuietly();
         }
+
+        // Заполняем номер телефона
+        if (is_null($user['msisdn'])) {
+            if (isset($message['contact'])) {
+                $user->msisdn = $message['contact']['phone_number'];
+                $user->saveQuietly();
+
+                $cities = City::select(['title'])->get()->pluck('title');
+                $keyboard = Keyboard::make([
+                   'keyboard' => $cities,
+                    'one_time_keyboard' => true,
+                    'resize_keyboard' => true,
+                ]);
+                $this->Telegram->sendMessage([
+                    'chat_id' => $sender,
+                    'text' => "Пожалуйста, выберите ваш город",
+                    'reply_markup' => $keyboard
+                ]);
+            } else {
+                $keyboard = Keyboard::make([
+                    'keyboard' => [
+                        [
+                            [
+                                'text' => 'Предоставить номер телефона',
+                                'request_contact' => true
+                            ]
+                        ]
+                    ],
+                    'one_time_keyboard' => true,
+                    'resize_keyboard' => true,
+                ]);
+                $this->Telegram->sendMessage([
+                    'chat_id' => $sender,
+                    'text' => "Пожалуйста, поделитесь вашим номером телефона",
+                    'reply_markup' => $keyboard
+                ]);
+            }
+        }
+
     }
 }

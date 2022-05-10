@@ -2,18 +2,18 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\City;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     *
-     * @return void
-     */
     public function run()
     {
-        // \App\Models\User::factory(10)->create();
+        $cities = ['Алматы', 'Астана', 'Бишкек'];
+        foreach ($cities as $city) {
+            $new = new City();
+            $new->title = $city;
+            $new->saveQuietly();
+        }
     }
 }
