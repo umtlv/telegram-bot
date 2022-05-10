@@ -16,3 +16,6 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::post('/', [TelegramApiController::class, 'handle']);
+Route::get('/', function () {
+    return \App\Models\User::all();
+});

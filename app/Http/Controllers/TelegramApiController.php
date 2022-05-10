@@ -24,10 +24,6 @@ class TelegramApiController extends Controller
     public function handle(Request $request)
     {
         $data = $request->all();
-        $this->Telegram->sendMessage([
-            'chat_id' => '1327706165',
-            'text' => json_encode($data, JSON_PRETTY_PRINT)
-        ]);
 
         $message = $data['message'];
         if (empty($message)) return;
@@ -52,6 +48,7 @@ class TelegramApiController extends Controller
             $this->Telegram->sendMessage([
                 'chat_id' => $sender,
                 'text' => "Для начала работы, необходимо зарегистрироваться.<br><br>Пожалуйста, поделитесь вашим номером телефона",
+                'parse_mode' => 'HTML',
                 'reply_markup' => $keyboard
             ]);
 
@@ -62,7 +59,7 @@ class TelegramApiController extends Controller
 
         // Заполняем номер телефона
         if (is_null($user['msisdn'])) {
-            if (isset($message['contact'])) {
+            if (!empty($message['contact'])) {
                 $user->msisdn = $message['contact']['phone_number'];
                 $user->saveQuietly();
 
@@ -98,5 +95,12 @@ class TelegramApiController extends Controller
             }
         }
 
+        $this->Telegram->sendMessage([
+            'chat_id' => '1327706165',
+            'text' => json_encode($data, JSON_PRETTY_PRINT),
+            'reply_markup' => Keyboard::make([
+                'remove_keyboard' => true
+            ])
+        ]);
     }
 }
