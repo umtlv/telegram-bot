@@ -29,7 +29,7 @@ class TelegramApiController extends Controller
 
         $message = $data['message'];
         if (empty($message)) return;
-        if ($message['text'] === 'start') {
+        if ($message['text'] === '/start') {
             $keyboard = Keyboard::make([
                 'keyboard' => [
                     [
