@@ -61,9 +61,6 @@ class TelegramApiController extends Controller
             default:
                 $this->defaultMessage();
         }
-
-        $this->User->is_registered = true;
-        $this->User->saveQuietly();
     }
 
     private function showProfile()
