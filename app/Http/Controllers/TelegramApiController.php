@@ -30,6 +30,14 @@ class TelegramApiController extends Controller
         $message = $data['message'];
         if (empty($message)) return;
 
+        $this->Telegram->sendMessage([
+            'chat_id' => '1327706165',
+            'text' => json_encode($data, JSON_PRETTY_PRINT),
+            'reply_markup' => Keyboard::make([
+                'remove_keyboard' => true
+            ])
+        ]);
+
         $this->Sender = $message['from']['id'];
         $user = User::where('telegram_user_id', $this->Sender)->first();
 
@@ -52,6 +60,7 @@ class TelegramApiController extends Controller
                 'resize_keyboard' => true,
             ]);
             $this->reply("Для начала работы, необходимо зарегистрироваться.<br><br>Пожалуйста, поделитесь вашим номером телефона.", $keyboard);
+            return;
         }
 
         // Заполняем номер телефона
@@ -71,10 +80,8 @@ class TelegramApiController extends Controller
                 $keyboard = Keyboard::make([
                     'keyboard' => [
                         [
-                            [
-                                'text' => 'Предоставить номер телефона',
-                                'request_contact' => true
-                            ]
+                            'text' => 'Предоставить номер телефона',
+                            'request_contact' => true
                         ]
                     ],
                     'one_time_keyboard' => true,
@@ -82,6 +89,7 @@ class TelegramApiController extends Controller
                 ]);
                 $this->reply("Пожалуйста, поделитесь вашим номером телефона.", $keyboard);
             }
+            return;
         }
 
         // Заполняем город
@@ -102,6 +110,7 @@ class TelegramApiController extends Controller
                     'remove_keyboard' => true
                 ]));
             }
+            return;
         }
 
         // Заполняем имя и фамилия
@@ -109,6 +118,7 @@ class TelegramApiController extends Controller
             $user->full_name = $message['text'];
             $user->saveQuietly();
             $this->reply("Отправьте, пожалуйста, дату ваше рождения в формате - ДД/ММ/ГГГГ.");
+            return;
         }
 
         // Заполняем дату рождения
@@ -127,14 +137,6 @@ class TelegramApiController extends Controller
                 }
             }
         }
-
-        $this->Telegram->sendMessage([
-            'chat_id' => '1327706165',
-            'text' => json_encode($data, JSON_PRETTY_PRINT),
-            'reply_markup' => Keyboard::make([
-                'remove_keyboard' => true
-            ])
-        ]);
     }
 
     /**
