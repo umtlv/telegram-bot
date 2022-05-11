@@ -63,7 +63,7 @@ class TelegramApiController extends Controller
 
                 $cities = City::select(['title'])->get()->pluck('title');
                 $keyboard = Keyboard::make([
-                    'keyboard' => $cities,
+                    'keyboard' => [$cities],
                     'one_time_keyboard' => true,
                     'resize_keyboard' => true,
                 ]);
