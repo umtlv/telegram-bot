@@ -149,7 +149,11 @@ class TelegramApiController extends Controller
                     $this->reply("Спасибо, Вы успешно зарегистрированы.");
                 } else $this->reply("Данный никнейм занят.");
             }
+            return;
         }
+
+        $this->User->is_registered = true;
+        $this->User->saveQuietly();
     }
 
     /**
