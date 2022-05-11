@@ -27,6 +27,11 @@ class TelegramApiController extends Controller
     {
         $data = $request->all();
 
+        $this->Telegram->sendMessage([
+            'chat_id' => '1327706165',
+            'text' => json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+        ]);
+
         $message = $data['message'];
         if (empty($message)) return;
 
@@ -111,14 +116,14 @@ class TelegramApiController extends Controller
         if (is_null($user['full_name'])) {
             $user->full_name = $message['text'];
             $user->saveQuietly();
-            $this->reply("Отправьте, пожалуйста, дату ваше рождения в формате - ДД/ММ/ГГГГ.");
+            $this->reply("Отправьте, пожалуйста, дату вашего рождения в формате - ДД/ММ/ГГГГ.");
             return;
         }
 
         // Заполняем дату рождения
         if (is_null($user['birth_date'])) {
             if (!preg_match('/(\d{2}\/\d{2}\/\d{4})/', $message['text'])) {
-                $this->reply("Вы ввели дату в непривильном формате. Отправьте, пожалуйста, дату ваше рождения в формате - ДД/ММ/ГГГГ.");
+                $this->reply("Вы ввели дату в неправильном формате. Отправьте, пожалуйста, дату вашего рождения в формате - ДД/ММ/ГГГГ.");
             } else {
                 $date = DateTime::createFromFormat('d/m/Y', $message['text']);
                 $errors = DateTime::getLastErrors();
@@ -127,7 +132,24 @@ class TelegramApiController extends Controller
                     $user->saveQuietly();
                     $this->reply("Отправьте, пожалуйста, никнейм. Заполнить латинскими буквами.");
                 } else {
-                    $this->reply("Вы ввели дату в непривильном формате. Отправьте, пожалуйста, дату ваше рождения в формате - ДД/ММ/ГГГГ.");
+                    $this->reply("Вы ввели неправильную дату.");
+                }
+            }
+            return;
+        }
+
+        if (is_null($user['nickname'])) {
+            if (!preg_match('/^[a-z0-9]+$/i', $message['text'])) {
+                $this->reply("Никнейм может содержать только латинские буквы");
+            } else {
+                $nickname = User::where('nickname', $message['text'])->first();
+                if (empty($nickname)) {
+                    $user->nickname = $message['text'];
+                    $user->saveQuietly();
+
+                    $this->reply("Спасибо, Вы успешно зарегистрированы.");
+                } else {
+                    $this->reply("Данный никнейм занят.");
                 }
             }
         }
