@@ -14,6 +14,8 @@ class TelegramApiController extends Controller
 {
     private Api $Telegram;
     private int $Sender;
+    private User $User;
+    private array $Message;
 
     public function __construct()
     {
@@ -27,84 +29,85 @@ class TelegramApiController extends Controller
     {
         $data = $request->all();
 
-        $this->Telegram->sendMessage([
-            'chat_id' => '1327706165',
-            'text' => json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
-        ]);
+        $this->Message = $data['message'];
+        if (empty($this->Message)) return;
 
-        $message = $data['message'];
-        if (empty($message)) return;
+        $this->Sender = $this->Message['from']['id'];
+        $this->User = User::where('telegram_user_id', $this->Sender)->first();
 
-        $this->Sender = $message['from']['id'];
-        $user = User::where('telegram_user_id', $this->Sender)->first();
-
-        // Если пользователя нету в списке и нажата команда
-        if (empty($user)) {
+        // Если пользователя нету в БД
+        if (empty($this->User)) {
             $user = new User();
             $user->telegram_user_id = $this->Sender;
             $user->saveQuietly();
 
-            $keyboard = Keyboard::make([
-                'keyboard' => [
-                    [
-                        [
-                            'text' => 'Предоставить номер телефона',
-                            'request_contact' => true
-                        ]
-                    ]
-                ],
-                'one_time_keyboard' => true,
-                'resize_keyboard' => true,
-            ]);
-            $this->reply("Для начала работы, необходимо зарегистрироваться.<br><br>Пожалуйста, поделитесь вашим номером телефона.", $keyboard);
+            $this->reply("Для начала работы, необходимо зарегистрироваться.");
+            $this->requestPhoneNumber();
             return;
         }
 
-        // Заполняем номер телефона
-        if (is_null($user['msisdn'])) {
-            if (!empty($message['contact'])) {
-                $user->msisdn = $message['contact']['phone_number'];
-                $user->saveQuietly();
+        if (!$this->User->is_registered) {
+            $this->registration();
+            return;
+        }
 
-                $cities = City::select(['title'])->get()->pluck('title');
-                $keyboard = Keyboard::make([
-                    'keyboard' => [$cities],
-                    'one_time_keyboard' => true,
-                    'resize_keyboard' => true,
-                ]);
-                $this->reply("Пожалуйста, выберите ваш город.", $keyboard);
-            } else {
-                $keyboard = Keyboard::make([
-                    'keyboard' => [
-                        [
-                            [
-                                'text' => 'Предоставить номер телефона',
-                                'request_contact' => true
-                            ]
-                        ]
-                    ],
-                    'one_time_keyboard' => true,
-                    'resize_keyboard' => true,
-                ]);
-                $this->reply("Пожалуйста, поделитесь вашим номером телефона.", $keyboard);
-            }
+        switch ($this->Message['text']) {
+            case '/profile':
+                $this->showProfile();
+                break;
+            case '/change_city':
+                $this->changeCity();
+                break;
+            default:
+                $this->defaultMessage();
+        }
+
+        $this->User->is_registered = true;
+        $this->User->saveQuietly();
+    }
+
+    private function showProfile()
+    {
+    }
+
+    private function changeCity()
+    {
+    }
+
+    /**
+     * @throws TelegramSDKException
+     */
+    private function defaultMessage()
+    {
+        $this->reply("
+            Выберите действие<br><br>
+            /profile - Показать профиль<br>
+            /change_city - Изменить город
+        ");
+    }
+
+    /**
+     * @throws TelegramSDKException
+     */
+    private function registration()
+    {
+        // Заполняем номер телефона
+        if (is_null($this->User['msisdn'])) {
+            if (!empty($this->Message['contact'])) {
+                $this->User->msisdn = $this->Message['contact']['phone_number'];
+                $this->User->saveQuietly();
+                $this->requestCity();
+            } else $this->requestPhoneNumber();
             return;
         }
 
         // Заполняем город
-        if (is_null($user['city_id'])) {
-            $city = City::where('title', $message['text'])->first();
-            if (empty($city)) {
-                $cities = City::select(['title'])->get()->pluck('title');
-                $keyboard = Keyboard::make([
-                    'keyboard' => [$cities],
-                    'one_time_keyboard' => true,
-                    'resize_keyboard' => true,
-                ]);
-                $this->reply("Данный город не действителен. Пожалуйста, выберите из списка.", $keyboard);
-            } else {
-                $user->city_id = $city->id;
-                $user->saveQuietly();
+        if (is_null($this->User['city_id'])) {
+            $city = City::where('title', $this->Message['text'])->first();
+            if (empty($city)) $this->requestCity(true);
+            else {
+                $this->User->city_id = $city->id;
+                $this->User->saveQuietly();
                 $this->reply("Отправьте, пожалуйста, ваше имя и фамилия.", Keyboard::make([
                     'remove_keyboard' => true
                 ]));
@@ -113,46 +116,79 @@ class TelegramApiController extends Controller
         }
 
         // Заполняем имя и фамилия
-        if (is_null($user['full_name'])) {
-            $user->full_name = $message['text'];
-            $user->saveQuietly();
+        if (is_null($this->User['full_name'])) {
+            $this->User->full_name = $this->Message['text'];
+            $this->User->saveQuietly();
             $this->reply("Отправьте, пожалуйста, дату вашего рождения в формате - ДД/ММ/ГГГГ.");
             return;
         }
 
         // Заполняем дату рождения
-        if (is_null($user['birth_date'])) {
-            if (!preg_match('/(\d{2}\/\d{2}\/\d{4})/', $message['text'])) {
+        if (is_null($this->User['birth_date'])) {
+            if (!preg_match('/(\d{2}\/\d{2}\/\d{4})/', $this->Message['text'])) {
                 $this->reply("Вы ввели дату в неправильном формате. Отправьте, пожалуйста, дату вашего рождения в формате - ДД/ММ/ГГГГ.");
             } else {
-                $date = DateTime::createFromFormat('d/m/Y', $message['text']);
+                $date = DateTime::createFromFormat('d/m/Y', $this->Message['text']);
                 $errors = DateTime::getLastErrors();
                 if ($errors['warning_count'] === 0) {
-                    $user->birth_date = $date->format('Y-m-d');
-                    $user->saveQuietly();
+                    $this->User->birth_date = $date->format('Y-m-d');
+                    $this->User->saveQuietly();
                     $this->reply("Отправьте, пожалуйста, никнейм. Заполнить латинскими буквами.");
-                } else {
-                    $this->reply("Вы ввели неправильную дату.");
-                }
+                } else $this->reply("Вы ввели неправильную дату.");
             }
             return;
         }
 
-        if (is_null($user['nickname'])) {
-            if (!preg_match('/^[a-z0-9]+$/i', $message['text'])) {
+        if (is_null($this->User['nickname'])) {
+            if (!preg_match('/^[a-z0-9]+$/i', $this->Message['text'])) {
                 $this->reply("Никнейм может содержать только латинские буквы");
             } else {
-                $nickname = User::where('nickname', $message['text'])->first();
+                $nickname = User::where('nickname', $this->Message['text'])->first();
                 if (empty($nickname)) {
-                    $user->nickname = $message['text'];
-                    $user->saveQuietly();
+                    $this->User->nickname = $this->Message['text'];
+                    $this->User->is_registered = true;
+                    $this->User->saveQuietly();
 
                     $this->reply("Спасибо, Вы успешно зарегистрированы.");
-                } else {
-                    $this->reply("Данный никнейм занят.");
-                }
+                } else $this->reply("Данный никнейм занят.");
             }
         }
+    }
+
+    /**
+     * @throws TelegramSDKException
+     */
+    private function requestPhoneNumber()
+    {
+        $keyboard = Keyboard::make([
+            'keyboard' => [
+                [
+                    [
+                        'text' => 'Предоставить номер телефона',
+                        'request_contact' => true
+                    ]
+                ]
+            ],
+            'one_time_keyboard' => true,
+            'resize_keyboard' => true,
+        ]);
+        $this->reply("Пожалуйста, поделитесь вашим номером телефона.", $keyboard);
+    }
+
+    /**
+     * @throws TelegramSDKException
+     */
+    private function requestCity($wrong = false)
+    {
+        $text = "Пожалуйста, выберите ваш город из списка.";
+        if ($wrong) $text = "Данный город не действителен.  " . $text;
+        $cities = City::select(['title'])->get()->pluck('title');
+        $keyboard = Keyboard::make([
+            'keyboard' => [$cities],
+            'one_time_keyboard' => true,
+            'resize_keyboard' => true,
+        ]);
+        $this->reply($text, $keyboard);
     }
 
     /**
