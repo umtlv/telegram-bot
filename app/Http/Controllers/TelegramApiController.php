@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\City;
 use App\Models\User;
 use DateTime;
+use Exception;
 use Illuminate\Http\Request;
 use Telegram\Bot\Api;
 use Telegram\Bot\Exceptions\TelegramSDKException;
@@ -28,9 +29,11 @@ class TelegramApiController extends Controller
     public function handle(Request $request)
     {
         $data = $request->all();
-
-        $this->Message = $data['message'];
-        if (empty($this->Message)) return;
+        try {
+            $this->Message = $data['message'];
+        } catch (Exception) {
+            return;
+        }
 
         $this->Sender = $this->Message['from']['id'];
         $this->User = User::where('telegram_user_id', $this->Sender)->first();
