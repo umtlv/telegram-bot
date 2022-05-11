@@ -30,18 +30,10 @@ class TelegramApiController extends Controller
         $message = $data['message'];
         if (empty($message)) return;
 
-        $this->Telegram->sendMessage([
-            'chat_id' => '1327706165',
-            'text' => json_encode($data, JSON_PRETTY_PRINT),
-            'reply_markup' => Keyboard::make([
-                'remove_keyboard' => true
-            ])
-        ]);
-
         $this->Sender = $message['from']['id'];
         $user = User::where('telegram_user_id', $this->Sender)->first();
 
-        // Если пользователя нету в списке и нажата команда - /start
+        // Если пользователя нету в списке и нажата команда
         if (empty($user)) {
             $user = new User();
             $user->telegram_user_id = $this->Sender;
@@ -80,8 +72,10 @@ class TelegramApiController extends Controller
                 $keyboard = Keyboard::make([
                     'keyboard' => [
                         [
-                            'text' => 'Предоставить номер телефона',
-                            'request_contact' => true
+                            [
+                                'text' => 'Предоставить номер телефона',
+                                'request_contact' => true
+                            ]
                         ]
                     ],
                     'one_time_keyboard' => true,
