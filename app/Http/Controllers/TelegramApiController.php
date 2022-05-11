@@ -120,7 +120,7 @@ class TelegramApiController extends Controller
                 $date = DateTime::createFromFormat('d/m/Y', $message['text']);
                 $errors = DateTime::getLastErrors();
                 if ($errors['warning_count'] === 0) {
-                    $user->full_name = $date->format('Y-m-d');
+                    $user->birth_date = $date->format('Y-m-d');
                     $user->saveQuietly();
                     $this->reply("Отправьте, пожалуйста, никнейм. Заполнить латинскими буквами.");
                 } else {

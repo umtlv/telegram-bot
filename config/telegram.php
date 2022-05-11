@@ -1,5 +1,7 @@
 <?php
 
+use App\Console\Commands\Telegram\StartCommand;
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -115,9 +117,10 @@ return [
     | will respond with a list of available commands and description.
     |
     */
-    'commands'                     => [
+    'commands'                     => array(
         Telegram\Bot\Commands\HelpCommand::class,
-    ],
+        StartCommand::class
+    ),
 
     /*
     |--------------------------------------------------------------------------
