@@ -29,11 +29,8 @@ class TelegramApiController extends Controller
     public function handle(Request $request)
     {
         $data = $request->all();
-        try {
-            $this->Message = $data['message'];
-        } catch (Exception) {
-            return;
-        }
+        if ($request->has('message')) $this->Message = $data['message'];
+        else return;
 
         $this->Sender = $this->Message['from']['id'];
         $this->User = User::where('telegram_user_id', $this->Sender)->first();
