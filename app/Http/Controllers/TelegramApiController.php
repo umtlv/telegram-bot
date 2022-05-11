@@ -35,20 +35,10 @@ class TelegramApiController extends Controller
 
         // Если пользователя нету в списке и нажата команда - /start
         if (empty($user)) {
-            $this->Telegram->sendMessage([
-                'chat_id' => '1327706165',
-                'text' => 'Пользователь не найден',
-            ]);
-        }
+            $user = new User();
+            $user->telegram_user_id = $this->Sender;
+            $user->saveQuietly();
 
-        if ($message['text'] === '/start') {
-            $this->Telegram->sendMessage([
-                'chat_id' => '1327706165',
-                'text' => 'Старт нажата',
-            ]);
-        }
-
-        if (empty($user) && $message['text'] === '/start') {
             $keyboard = Keyboard::make([
                 'keyboard' => [
                     [
@@ -62,10 +52,6 @@ class TelegramApiController extends Controller
                 'resize_keyboard' => true,
             ]);
             $this->reply("Для начала работы, необходимо зарегистрироваться.<br><br>Пожалуйста, поделитесь вашим номером телефона.", $keyboard);
-
-            $user = new User();
-            $user->telegram_user_id = $this->Sender;
-            $user->saveQuietly();
         }
 
         // Заполняем номер телефона
