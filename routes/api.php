@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\TelegramApiController;
-use Illuminate\Http\Request;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,5 +17,5 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/', [TelegramApiController::class, 'handle']);
 Route::get('/', function () {
-    return \App\Models\User::all();
+    return User::all();
 });

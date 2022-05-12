@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\City;
 use App\Models\User;
 use DateTime;
-use Exception;
 use Illuminate\Http\Request;
 use Telegram\Bot\Api;
 use Telegram\Bot\Exceptions\TelegramSDKException;
@@ -45,6 +44,8 @@ class TelegramApiController extends Controller
             $this->requestPhoneNumber();
             return;
         }
+
+        $this->defaultMessage();
 
         if (!$this->User->is_registered) {
             $this->registration();
