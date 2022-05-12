@@ -86,13 +86,19 @@ class TelegramApiController extends Controller
      */
     private function change()
     {
+        if ($this->Text === '/cancel') {
+            $this->User->step = null;
+            $this->User->saveQuietly();
+            $this->reply("Изменение отменено.", Keyboard::make(['remove_keyboard' => true]));
+        }
+
         switch ($this->User->step) {
             case 1:
                 $city = City::where('title', $this->Text)->first();
                 if (empty($city)) $this->requestCity(true);
                 else {
-                    $this->User = $city->id;
-                    $this->step = null;
+                    $this->User->city_id = $city->id;
+                    $this->User->step = null;
                     $this->User->saveQuietly();
                     $this->reply("Город успешно сменен", Keyboard::make(['remove_keyboard' => true]));
                 }
@@ -116,12 +122,21 @@ class TelegramApiController extends Controller
     /**
      * @throws TelegramSDKException
      */
+    private function cancelEdition()
+    {
+        $this->reply("Для отмены нажмите /cancel");
+    }
+
+    /**
+     * @throws TelegramSDKException
+     */
     private function editCity()
     {
         $this->User->step = 1;
         $this->User->saveQuietly();
 
         $this->requestCity();
+        $this->cancelEdition();
     }
 
     /**
