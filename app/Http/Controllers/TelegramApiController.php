@@ -35,7 +35,7 @@ class TelegramApiController extends Controller
         ]);
 
         if ($request->has('message'))
-            $this->Message = $request->post('message');
+            $this->Message = $request['message'];
         else return $this->success();
 
         $this->Sender = $this->Message['from']['id'];
@@ -43,16 +43,9 @@ class TelegramApiController extends Controller
 
         // Если пользователя нету в БД
         if (empty($this->User)) {
-            try {
-                $user = new User();
-                $user->telegram_user_id = $this->Sender;
-                $user->saveQuietly();
-            } catch (Exception $e) {
-                $this->Telegram->sendMessage([
-                    'chat_id' => '1327706165',
-                    'text' => $e->getMessage()
-                ]);
-            }
+            $user = new User();
+            $user->telegram_user_id = $this->Sender;
+            $user->saveQuietly();
 
             $this->reply("Для начала работы, необходимо зарегистрироваться.");
             $this->requestPhoneNumber();
