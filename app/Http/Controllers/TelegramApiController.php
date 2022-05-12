@@ -19,7 +19,7 @@ class TelegramApiController extends Controller
     private User|null $User;
     private Collection $Message;
     private int $SenderId;
-    private string $Text;
+    private string|null $Text;
 
     public function __construct()
     {
