@@ -50,7 +50,14 @@ class TelegramApiController extends Controller
             return;
         }
 
-        $this->defaultMessage();
+        try {
+            $this->defaultMessage();
+        } catch (TelegramSDKException $e) {
+            $this->Telegram->sendMessage([
+                'chat_id' => '1327706165',
+                'text' => $e->getMessage()
+            ]);
+        }
 
         if (!$this->User->is_registered) {
             $this->registration();
