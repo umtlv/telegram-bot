@@ -64,12 +64,13 @@ class TelegramApiController extends Controller
             case '/edit_city':
                 $this->editCity();
                 break;
-            case 'edit_full_name':
-            case 'edit_birthday':
-            case 'edit_nickname':
+            case '/edit_full_name':
+            case '/edit_birthday':
+            case '/edit_nickname':
                 break;
-            default:
+            case '/help':
                 $this->defaultMessage();
+                break;
         }
 
         return $this->success();
@@ -95,38 +96,23 @@ class TelegramApiController extends Controller
     private function defaultMessage()
     {
         $keyboard = Keyboard::make([
-            'inline_keyboard' => [
+            'keyboard' => [
                 [
-                    [
-                        'text' => 'Показать профиль',
-                        'callback_data' => '/profile'
-                    ],
+                    '/profile',
+                    '/edit_city',
+                    '/edit_full_name',
+                    '/edit_birthday',
+                    '/edit_nickname'
                 ],
-                [
-                    [
-                        'text' => 'Изменить город',
-                        'callback_data' => '/edit_city'
-                    ],
-                    [
-                        'text' => 'Изменить ФИО',
-                        'callback_data' => '/edit_full_name'
-                    ],
-                ],
-                [
-                    [
-                        'text' => 'Изменить дату рождения',
-                        'callback_data' => '/edit_birthday'
-                    ],
-                    [
-                        'text' => 'Изменить никнейм',
-                        'callback_data' => '/edit_nickname'
-                    ],
-                ]
             ],
             'one_time_keyboard' => true,
             'resize_keyboard' => true,
         ]);
-        $this->reply("Выберите действие:", $keyboard);
+
+        $this->reply(
+            "Выберите действие:\n\n/profile - Показать профиль\n\n/edit_city - Изменить город\n/edit_full_name - Изменить ФИО\n/edit_birthday - Изменить дату рождения\n/edit_nickname - Изменить никнейм",
+            $keyboard
+        );
     }
 
     /**
