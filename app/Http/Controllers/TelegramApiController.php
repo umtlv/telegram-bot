@@ -102,7 +102,7 @@ class TelegramApiController extends Controller
             'edit_birthday' => 'Изменить дату рождения',
             'edit_nickname' => 'Изменить никнейм'
         ])
-            ->map(fn(string $commandDescription, string $command) => Keyboard::inlineButton(['text' => $commandDescription, 'callback_data' => "/$command"]))
+            ->map(fn(string $title, string $command) => Keyboard::inlineButton(['text' => $title, 'callback_data' => "/$command"]))
             ->chunk(2)
             ->each(fn(mixed $buttons) => $keyboard->row(...$buttons));
 
