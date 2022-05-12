@@ -101,11 +101,17 @@ class TelegramApiController extends Controller
         $keyboard = Keyboard::make([
             'keyboard' => [
                 [
-                    '/profile',
-                    '/edit_city',
-                    '/edit_full_name',
-                    '/edit_birthday',
-                    '/edit_nickname'
+                    [
+                        '/profile',
+                    ],
+                    [
+                        '/edit_city',
+                        '/edit_full_name',
+                    ],
+                    [
+                        '/edit_birthday',
+                        '/edit_nickname'
+                    ]
                 ],
             ],
             'one_time_keyboard' => true,
