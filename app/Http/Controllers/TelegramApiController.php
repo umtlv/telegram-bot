@@ -11,7 +11,7 @@ use Telegram\Bot\Api;
 use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\Keyboard\Keyboard;
 
-class TelegramApiController extends ApiController
+class TelegramApiController extends Controller
 {
     private Api $Telegram;
     private int $Sender;
