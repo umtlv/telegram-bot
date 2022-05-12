@@ -36,6 +36,18 @@ class TelegramApiController extends Controller
             $this->Message = $request->post('message');
         else return;
 
+        try {
+            $this->Telegram->sendMessage([
+                'chat_id' => '1327706165',
+                'text' => "Сообщение " . $this->Message['text']
+            ]);
+        } catch (TelegramSDKException $e) {
+            $this->Telegram->sendMessage([
+                'chat_id' => '1327706165',
+                'text' =>  $e->getMessage()
+            ]);
+        }
+
         $this->Sender = $this->Message['from']['id'];
         $this->User = User::where('telegram_user_id', $this->Sender)->first();
 
