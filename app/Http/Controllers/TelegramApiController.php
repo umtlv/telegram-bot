@@ -82,7 +82,7 @@ class TelegramApiController extends Controller
     {
         $city = City::where('id', $this->User->city_id)->first();
         $birthDate = date('d.m.Y', strtotime($this->User['birth_date']));
-        $this->reply("<b>{$this->User->full_name}</b>, ваш профиль: \n\nВаш город: <b>$city->title</b>\nДата вашего рождения: <b>$birthDate</b>\nВаш никнейм: \n<b>{$this->User->nickname}</b>");
+        $this->reply("<b>{$this->User->full_name}</b>, ваш профиль: \n\nВаш город: <b>$city->title</b>\nДата вашего рождения: <b>$birthDate</b>\nВаш никнейм: <b>{$this->User->nickname}</b>");
     }
 
     private function editCity()
