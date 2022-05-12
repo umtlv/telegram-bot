@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,4 +16,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
+});
+Route::get('/log', function () {
+    return File::get('../storage/logs/laravel.log');
+});
+Route::get('/log-delete', function () {
+    File::delete('../storage/logs/laravel.log');
 });
