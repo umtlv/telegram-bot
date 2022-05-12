@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\City;
 use App\Models\User;
 use App\Traits\Verification;
-use DateTime;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -80,6 +79,7 @@ class TelegramApiController extends Controller
                 $this->editBirthday();
                 break;
             case '/edit_nickname':
+                $this->editNickName();
                 break;
             case '/help':
                 $this->defaultMessage();
@@ -108,6 +108,7 @@ class TelegramApiController extends Controller
                     $this->User->city_id = $city->id;
                     $this->User->step = null;
                     $this->User->saveQuietly();
+
                     $this->reply("Город успешно изменен.", Keyboard::make(['remove_keyboard' => true]));
                 }
                 break;
@@ -124,10 +125,24 @@ class TelegramApiController extends Controller
                     $this->User->birth_date = $date;
                     $this->User->step = null;
                     $this->User->saveQuietly();
+
                     $this->reply("Дата вашего рождения успешно изменена.");
                 } catch (Exception $e) {
                     $this->reply($e->getMessage());
                 }
+                break;
+            case 4:
+                try {
+                    self::checkNickName($this->Text);
+                    $this->User->nickname = $this->Text;
+                    $this->User->step = null;
+                    $this->User->saveQuietly();
+
+                    $this->reply("Никнейм успешно изменен.");
+                } catch (Exception $e) {
+                    $this->reply($e->getMessage());
+                }
+                break;
         }
     }
 
@@ -182,6 +197,18 @@ class TelegramApiController extends Controller
     private function editBirthday()
     {
         $this->User->step = 3;
+        $this->User->saveQuietly();
+
+        $this->reply("Отправьте, пожалуйста, дату вашего рождения в формате - ДД/ММ/ГГГГ.");
+        $this->cancelEdition();
+    }
+
+    /**
+     * @throws TelegramSDKException
+     */
+    private function editNickName()
+    {
+        $this->User->step = 4;
         $this->User->saveQuietly();
 
         $this->reply("Отправьте, пожалуйста, дату вашего рождения в формате - ДД/ММ/ГГГГ.");
@@ -266,19 +293,18 @@ class TelegramApiController extends Controller
             return;
         }
 
+        // Заполняем никнейм
         if (is_null($this->User['nickname'])) {
-            if (!preg_match('/^[a-z0-9]+$/i', $this->Text)) {
-                $this->reply("Никнейм может содержать только латинские буквы");
-            } else {
-                $nickname = User::where('nickname', $this->Text)->first();
-                if (empty($nickname)) {
-                    $this->User->nickname = $this->Text;
-                    $this->User->is_registered = true;
-                    $this->User->saveQuietly();
+            try {
+                self::checkNickName($this->Text);
+                $this->User->nickname = $this->Text;
+                $this->User->is_registered = true;
+                $this->User->saveQuietly();
 
-                    $this->reply("Спасибо, вы успешно зарегистрированы.");
-                    $this->defaultMessage();
-                } else $this->reply("Данный никнейм занят.");
+                $this->reply("Спасибо, вы успешно зарегистрированы.");
+                $this->defaultMessage();
+            } catch (Exception $e) {
+                $this->reply($e->getMessage());
             }
         }
     }
