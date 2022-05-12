@@ -101,22 +101,22 @@ class TelegramApiController extends Controller
                         'text' => 'Показать профиль',
                         'callback_data' => '/profile'
                     ],
+                ],
+                [
                     [
                         'text' => 'Изменить город',
                         'callback_data' => '/edit_city'
                     ],
-                ],
-                [
                     [
                         'text' => 'Изменить ФИО',
                         'callback_data' => '/edit_full_name'
                     ],
+                ],
+                [
                     [
                         'text' => 'Изменить дату рождения',
                         'callback_data' => '/edit_birthday'
                     ],
-                ],
-                [
                     [
                         'text' => 'Изменить никнейм',
                         'callback_data' => '/edit_nickname'
