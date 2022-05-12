@@ -16,7 +16,7 @@ use Telegram\Bot\Objects\Update;
 class TelegramApiController extends Controller
 {
     private Api $Telegram;
-    private User $User;
+    private User|null $User;
     private Collection $Message;
     private int $SenderId;
     private string $Text;
