@@ -10,7 +10,7 @@ use Telegram\Bot\Api;
 use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\Keyboard\Keyboard;
 
-class TelegramApiController extends Controller
+class TelegramApiController extends ApiController
 {
     private Api $Telegram;
     private int $Sender;
@@ -32,9 +32,11 @@ class TelegramApiController extends Controller
             'text' => json_encode($request->all(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
         ]);
 
+        return $this->success();
+
         if ($request->has('message'))
             $this->Message = $request->post('message');
-        else return;
+        else return $this->success();
 
         try {
             $this->Telegram->sendMessage([
