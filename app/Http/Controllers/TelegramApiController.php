@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Models\User;
 use DateTime;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Telegram\Bot\Api;
 use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\Keyboard\Keyboard;
@@ -25,30 +26,16 @@ class TelegramApiController extends ApiController
     /**
      * @throws TelegramSDKException
      */
-    public function handle(Request $request)
+    public function handle(Request $request): Response
     {
         $this->Telegram->sendMessage([
             'chat_id' => '1327706165',
             'text' => json_encode($request->all(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
         ]);
 
-        return $this->success();
-
         if ($request->has('message'))
             $this->Message = $request->post('message');
         else return $this->success();
-
-        try {
-            $this->Telegram->sendMessage([
-                'chat_id' => '1327706165',
-                'text' => "Сообщение " . $this->Message['text']
-            ]);
-        } catch (TelegramSDKException $e) {
-            $this->Telegram->sendMessage([
-                'chat_id' => '1327706165',
-                'text' =>  $e->getMessage()
-            ]);
-        }
 
         $this->Sender = $this->Message['from']['id'];
         $this->User = User::where('telegram_user_id', $this->Sender)->first();
@@ -61,21 +48,12 @@ class TelegramApiController extends ApiController
 
             $this->reply("Для начала работы, необходимо зарегистрироваться.");
             $this->requestPhoneNumber();
-            return;
-        }
-
-        try {
-            $this->defaultMessage();
-        } catch (TelegramSDKException $e) {
-            $this->Telegram->sendMessage([
-                'chat_id' => '1327706165',
-                'text' => $e->getMessage()
-            ]);
+            return $this->success();
         }
 
         if (!$this->User->is_registered) {
             $this->registration();
-            return;
+            return $this->success();
         }
 
         switch ($this->Message['text']) {
@@ -88,6 +66,8 @@ class TelegramApiController extends ApiController
             default:
                 $this->defaultMessage();
         }
+
+        return $this->success();
     }
 
     private function showProfile()
