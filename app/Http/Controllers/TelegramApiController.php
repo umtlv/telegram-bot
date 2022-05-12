@@ -70,6 +70,8 @@ class TelegramApiController extends Controller
                 $this->editCity();
                 break;
             case '/edit_full_name':
+                $this->editFullName();
+                break;
             case '/edit_birthday':
             case '/edit_nickname':
                 break;
@@ -100,10 +102,23 @@ class TelegramApiController extends Controller
                     $this->User->city_id = $city->id;
                     $this->User->step = null;
                     $this->User->saveQuietly();
-                    $this->reply("Город успешно сменен", Keyboard::make(['remove_keyboard' => true]));
+                    $this->reply("Город успешно изменен.", Keyboard::make(['remove_keyboard' => true]));
                 }
                 break;
+            case 2:
+                $this->User->full_name = $this->Text;
+                $this->User->step = null;
+                $this->User->saveQuietly();
+                break;
         }
+    }
+
+    /**
+     * @throws TelegramSDKException
+     */
+    private function cancelEdition()
+    {
+        $this->reply("Для отмены нажмите /cancel");
     }
 
     /**
@@ -122,14 +137,6 @@ class TelegramApiController extends Controller
     /**
      * @throws TelegramSDKException
      */
-    private function cancelEdition()
-    {
-        $this->reply("Для отмены нажмите /cancel");
-    }
-
-    /**
-     * @throws TelegramSDKException
-     */
     private function editCity()
     {
         $this->User->step = 1;
@@ -137,6 +144,17 @@ class TelegramApiController extends Controller
 
         $this->requestCity();
         $this->cancelEdition();
+    }
+
+    /**
+     * @throws TelegramSDKException
+     */
+    private function editFullName()
+    {
+        $this->User->step = 2;
+        $this->User->saveQuietly();
+
+        $this->reply("Отправьте, пожалуйста, ваше имя и фамилия.");
     }
 
     /**
@@ -161,7 +179,6 @@ class TelegramApiController extends Controller
             'one_time_keyboard' => true,
             'resize_keyboard' => true,
         ]);
-
         $this->reply(
             "Выберите действие:\n\n/profile - Показать профиль\n\n/edit_city - Изменить город\n/edit_full_name - Изменить ФИО\n/edit_birthday - Изменить дату рождения\n/edit_nickname - Изменить никнейм",
             $keyboard

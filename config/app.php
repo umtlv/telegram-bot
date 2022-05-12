@@ -186,6 +186,7 @@ return [
          * Package Service Providers...
          */
         \Telegram\Bot\Laravel\TelegramServiceProvider::class,
+        \Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider::class,
 
         /*
          * Application Service Providers...
