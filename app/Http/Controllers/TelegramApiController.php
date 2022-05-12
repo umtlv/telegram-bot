@@ -83,11 +83,7 @@ class TelegramApiController extends ApiController
      */
     private function defaultMessage()
     {
-        $this->reply("
-            Выберите действие \n\n
-            /profile - Показать профиль\n
-            /change_city - Изменить город
-        ");
+        $this->reply("Выберите действие:\n\n/profile - Показать профиль\n\n/edit_city - Изменить город\n/edit_full_name - Изменить ФИО\n/edit_birthday - Изменить дату рождения\n/edit_nickname - Изменить никнейм");
     }
 
     /**
