@@ -29,13 +29,14 @@ class TelegramApiController extends Controller
      */
     public function handle(Request $request): Response
     {
+        $data = $request->all();
         $this->Telegram->sendMessage([
             'chat_id' => '1327706165',
-            'text' => json_encode($request->all(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+            'text' => json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
         ]);
 
-        if ($request->has('message'))
-            $this->Message = $request['message'];
+        if (array_key_exists('message', $data))
+            $this->Message = $data['message'];
         else return $this->success();
 
         $this->Sender = $this->Message['from']['id'];
