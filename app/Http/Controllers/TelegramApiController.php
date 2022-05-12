@@ -28,8 +28,8 @@ class TelegramApiController extends Controller
      */
     public function handle(Request $request)
     {
-        $data = $request->all();
-        if ($request->has('message')) $this->Message = $data['message'];
+        if ($request->has('message'))
+            $this->Message = $request->post('message');
         else return;
 
         $this->Sender = $this->Message['from']['id'];
@@ -147,13 +147,10 @@ class TelegramApiController extends Controller
                     $this->User->saveQuietly();
 
                     $this->reply("Спасибо, Вы успешно зарегистрированы.");
+                    $this->defaultMessage();
                 } else $this->reply("Данный никнейм занят.");
             }
-            return;
         }
-
-        $this->User->is_registered = true;
-        $this->User->saveQuietly();
     }
 
     /**
