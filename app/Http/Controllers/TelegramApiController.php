@@ -37,10 +37,6 @@ class TelegramApiController extends Controller
     {
         $data = new Update($request->all());
         $this->Message = $data->getMessage();
-        $this->Telegram->sendMessage([
-            'chat_id' => '1327706165',
-            'text' => json_encode($data->getMessage(), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
-        ]);
         $this->SenderId = $this->Message->from->id;
         $this->Text = $this->Message->text;
         $this->User = User::where('telegram_user_id', $this->SenderId)->first();
