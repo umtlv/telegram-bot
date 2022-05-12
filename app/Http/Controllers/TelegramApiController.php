@@ -94,18 +94,38 @@ class TelegramApiController extends Controller
      */
     private function defaultMessage()
     {
-        $keyboard = Keyboard::make()->inline();
-        collect([
-            'profile' => 'Показать профиль',
-            'edit_city' => 'Изменить город',
-            'edit_full_name' => 'Изменить ФИО',
-            'edit_birthday' => 'Изменить дату рождения',
-            'edit_nickname' => 'Изменить никнейм'
-        ])
-            ->map(fn(string $title, string $command) => Keyboard::inlineButton(['text' => $title, 'callback_data' => "/$command"]))
-            ->chunk(2)
-            ->each(fn(mixed $buttons) => $keyboard->row(...$buttons));
-
+        $keyboard = Keyboard::make([
+            'inline_keyboard' => [
+                [
+                    [
+                        'text' => 'Показать профиль',
+                        'callback_data' => '/profile'
+                    ],
+                    [
+                        'text' => 'Изменить город',
+                        'callback_data' => '/edit_city'
+                    ],
+                ],
+                [
+                    [
+                        'text' => 'Изменить ФИО',
+                        'callback_data' => '/edit_full_name'
+                    ],
+                    [
+                        'text' => 'Изменить дату рождения',
+                        'callback_data' => '/edit_birthday'
+                    ],
+                ],
+                [
+                    [
+                        'text' => 'Изменить никнейм',
+                        'callback_data' => '/edit_nickname'
+                    ],
+                ]
+            ],
+            'one_time_keyboard' => true,
+            'resize_keyboard' => true,
+        ]);
         $this->reply("Выберите действие:", $keyboard);
     }
 
