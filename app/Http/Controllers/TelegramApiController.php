@@ -94,7 +94,7 @@ class TelegramApiController extends Controller
                     $this->User = $city->id;
                     $this->step = null;
                     $this->User->saveQuietly();
-                    $this->reply("Город успешно сменен");
+                    $this->reply("Город успешно сменен", Keyboard::make(['remove_keyboard' => true]));
                 }
                 break;
         }
