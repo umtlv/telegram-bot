@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\City;
 use App\Models\User;
 use DateTime;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Telegram\Bot\Api;
@@ -42,9 +43,16 @@ class TelegramApiController extends Controller
 
         // Если пользователя нету в БД
         if (empty($this->User)) {
-            $user = new User();
-            $user->telegram_user_id = $this->Sender;
-            $user->saveQuietly();
+            try {
+                $user = new User();
+                $user->telegram_user_id = $this->Sender;
+                $user->saveQuietly();
+            } catch (Exception $e) {
+                $this->Telegram->sendMessage([
+                    'chat_id' => '1327706165',
+                    'text' => $e->getMessage()
+                ]);
+            }
 
             $this->reply("Для начала работы, необходимо зарегистрироваться.");
             $this->requestPhoneNumber();
