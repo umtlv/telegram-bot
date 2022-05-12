@@ -30,6 +30,7 @@ class TelegramApiController extends Controller
     }
 
     /**
+     * Обработчик входящих запросов от Телеграм
      * @throws TelegramSDKException
      */
     public function handle(Request $request): Response
@@ -55,11 +56,13 @@ class TelegramApiController extends Controller
             return $this->success();
         }
 
+        // Если пользователь еще не зарегистрирован
         if (!$this->User->is_registered) {
             $this->registration();
             return $this->success();
         }
 
+        // Если происходит изменение
         if ($this->User->step) {
             $this->change();
             return $this->success();
@@ -90,6 +93,7 @@ class TelegramApiController extends Controller
     }
 
     /**
+     * Изменение данных
      * @throws TelegramSDKException
      */
     private function change()
@@ -147,6 +151,7 @@ class TelegramApiController extends Controller
     }
 
     /**
+     * Сообщение от отменен изменения
      * @throws TelegramSDKException
      */
     private function cancelEdition()
@@ -155,6 +160,7 @@ class TelegramApiController extends Controller
     }
 
     /**
+     * Показать профиль
      * @throws TelegramSDKException
      */
     private function showProfile()
@@ -168,6 +174,7 @@ class TelegramApiController extends Controller
     }
 
     /**
+     * Изменить город
      * @throws TelegramSDKException
      */
     private function editCity()
@@ -180,6 +187,7 @@ class TelegramApiController extends Controller
     }
 
     /**
+     * Изменить ФИО
      * @throws TelegramSDKException
      */
     private function editFullName()
@@ -192,6 +200,7 @@ class TelegramApiController extends Controller
     }
 
     /**
+     * Изменить дату рождения
      * @throws TelegramSDKException
      */
     private function editBirthday()
@@ -204,6 +213,7 @@ class TelegramApiController extends Controller
     }
 
     /**
+     * Изменить никнейм
      * @throws TelegramSDKException
      */
     private function editNickName()
@@ -211,11 +221,12 @@ class TelegramApiController extends Controller
         $this->User->step = 4;
         $this->User->saveQuietly();
 
-        $this->reply("Отправьте, пожалуйста, дату вашего рождения в формате - ДД/ММ/ГГГГ.");
+        $this->reply("Отправьте, пожалуйста, никнейм. Заполнить латинскими буквами.");
         $this->cancelEdition();
     }
 
     /**
+     * Стандартное сообщение
      * @throws TelegramSDKException
      */
     private function defaultMessage()
@@ -244,6 +255,7 @@ class TelegramApiController extends Controller
     }
 
     /**
+     * Регистрация
      * @throws TelegramSDKException
      */
     private function registration()
@@ -310,6 +322,7 @@ class TelegramApiController extends Controller
     }
 
     /**
+     * Запросить номер телефона
      * @throws TelegramSDKException
      */
     private function requestPhoneNumber()
@@ -330,6 +343,7 @@ class TelegramApiController extends Controller
     }
 
     /**
+     * Запросить город
      * @throws TelegramSDKException
      */
     private function requestCity($wrong = false)
@@ -346,6 +360,7 @@ class TelegramApiController extends Controller
     }
 
     /**
+     * Ответить
      * @throws TelegramSDKException
      */
     private function reply(string $text, Keyboard|null $markup = null)
