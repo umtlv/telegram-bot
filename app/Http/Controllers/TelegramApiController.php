@@ -61,8 +61,12 @@ class TelegramApiController extends Controller
             case '/profile':
                 $this->showProfile();
                 break;
-            case '/change_city':
-                $this->changeCity();
+            case '/edit_city':
+                $this->editCity();
+                break;
+            case 'edit_full_name':
+            case 'edit_birthday':
+            case 'edit_nickname':
                 break;
             default:
                 $this->defaultMessage();
@@ -71,11 +75,17 @@ class TelegramApiController extends Controller
         return $this->success();
     }
 
+    /**
+     * @throws TelegramSDKException
+     */
     private function showProfile()
     {
+        $city = City::where('id', $this->User['city_id'])->first();
+        $birthDate = date('d.m.Y', strtotime($this->User['birth_date']));
+        $this->reply("<b>$this->User[full_name]</b>, ваш профиль: \n\nВаш город: <b>$city->title</b>\nДата вашего рождения: <b>$birthDate</b>\nВаш никнейм: \n<b>$this->User[nickname]</b>");
     }
 
-    private function changeCity()
+    private function editCity()
     {
     }
 
