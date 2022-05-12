@@ -5,19 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\City;
 use App\Models\User;
 use DateTime;
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Telegram\Bot\Api;
 use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\Keyboard\Keyboard;
+use Telegram\Bot\Objects\Message;
 
 class TelegramApiController extends Controller
 {
     private Api $Telegram;
-    private int $Sender;
     private User $User;
-    private array $Message;
+    private Message $Data;
 
     public function __construct()
     {
@@ -29,28 +28,13 @@ class TelegramApiController extends Controller
      */
     public function handle(Request $request): Response
     {
-        $data = $request->all();
-        $this->Telegram->sendMessage([
-            'chat_id' => '1327706165',
-            'text' => json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
-        ]);
-
-        if (array_key_exists('message', $data))
-            $this->Message = $data['message'];
-        else return $this->success();
-
-        $this->Telegram->sendMessage([
-            'chat_id' => '1327706165',
-            'text' => json_encode($this->Message, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
-        ]);
-
-        $this->Sender = $this->Message['from']['id'];
-        $this->User = User::where('telegram_user_id', $this->Sender)->first();
+        $this->Data = new Message($request->all());
+        $this->User = User::where('telegram_user_id', $this->Data->contact->userId)->first();
 
         // Если пользователя нету в БД
         if (empty($this->User)) {
             $user = new User();
-            $user->telegram_user_id = $this->Sender;
+            $user->telegram_user_id = $this->Data->contact->userId;
             $user->saveQuietly();
 
             $this->reply("Для начала работы, необходимо зарегистрироваться.");
@@ -63,7 +47,7 @@ class TelegramApiController extends Controller
             return $this->success();
         }
 
-        switch ($this->Message['text']) {
+        switch ($this->Data->text) {
             case '/profile':
                 $this->showProfile();
                 break;
@@ -100,8 +84,8 @@ class TelegramApiController extends Controller
     {
         // Заполняем номер телефона
         if (is_null($this->User['msisdn'])) {
-            if (!empty($this->Message['contact'])) {
-                $this->User->msisdn = $this->Message['contact']['phone_number'];
+            if (!empty($this->Data->contact->phoneNumber)) {
+                $this->User->msisdn = $this->Data->contact->phoneNumber;
                 $this->User->saveQuietly();
                 $this->requestCity();
             } else $this->requestPhoneNumber();
@@ -110,7 +94,7 @@ class TelegramApiController extends Controller
 
         // Заполняем город
         if (is_null($this->User['city_id'])) {
-            $city = City::where('title', $this->Message['text'])->first();
+            $city = City::where('title', $this->Data->text)->first();
             if (empty($city)) $this->requestCity(true);
             else {
                 $this->User->city_id = $city->id;
@@ -124,7 +108,7 @@ class TelegramApiController extends Controller
 
         // Заполняем имя и фамилия
         if (is_null($this->User['full_name'])) {
-            $this->User->full_name = $this->Message['text'];
+            $this->User->full_name = $this->Data->text;
             $this->User->saveQuietly();
             $this->reply("Отправьте, пожалуйста, дату вашего рождения в формате - ДД/ММ/ГГГГ.");
             return;
@@ -132,10 +116,10 @@ class TelegramApiController extends Controller
 
         // Заполняем дату рождения
         if (is_null($this->User['birth_date'])) {
-            if (!preg_match('/(\d{2}\/\d{2}\/\d{4})/', $this->Message['text'])) {
+            if (!preg_match('/(\d{2}\/\d{2}\/\d{4})/', $this->Data->text)) {
                 $this->reply("Вы ввели дату в неправильном формате. Отправьте, пожалуйста, дату вашего рождения в формате - ДД/ММ/ГГГГ.");
             } else {
-                $date = DateTime::createFromFormat('d/m/Y', $this->Message['text']);
+                $date = DateTime::createFromFormat('d/m/Y', $this->Data->text);
                 $errors = DateTime::getLastErrors();
                 if ($errors['warning_count'] === 0) {
                     $this->User->birth_date = $date->format('Y-m-d');
@@ -147,12 +131,12 @@ class TelegramApiController extends Controller
         }
 
         if (is_null($this->User['nickname'])) {
-            if (!preg_match('/^[a-z0-9]+$/i', $this->Message['text'])) {
+            if (!preg_match('/^[a-z0-9]+$/i', $this->Data->text)) {
                 $this->reply("Никнейм может содержать только латинские буквы");
             } else {
-                $nickname = User::where('nickname', $this->Message['text'])->first();
+                $nickname = User::where('nickname', $this->Data->text)->first();
                 if (empty($nickname)) {
-                    $this->User->nickname = $this->Message['text'];
+                    $this->User->nickname = $this->Data->text;
                     $this->User->is_registered = true;
                     $this->User->saveQuietly();
 
@@ -205,7 +189,7 @@ class TelegramApiController extends Controller
     private function reply(string $text, Keyboard|null $markup = null)
     {
         $params = [
-            'chat_id' => $this->Sender,
+            'chat_id' => $this->Data->contact->userId,
             'text' => $text,
             'parse_mode' => 'HTML',
         ];
