@@ -57,6 +57,11 @@ class TelegramApiController extends Controller
             return $this->success();
         }
 
+        if ($this->User->step) {
+            $this->change();
+            return $this->success();
+        }
+
         switch ($this->Message->text) {
             case '/profile':
                 $this->showProfile();
@@ -79,6 +84,25 @@ class TelegramApiController extends Controller
     /**
      * @throws TelegramSDKException
      */
+    private function change()
+    {
+        switch ($this->User->step) {
+            case 1:
+                $city = City::where('title', $this->Text)->first();
+                if (empty($city)) $this->requestCity(true);
+                else {
+                    $this->User = $city->id;
+                    $this->step = null;
+                    $this->User->saveQuietly();
+                    $this->reply("Город успешно сменен");
+                }
+                break;
+        }
+    }
+
+    /**
+     * @throws TelegramSDKException
+     */
     private function showProfile()
     {
         $city = City::where('id', $this->User->city_id)->first();
@@ -89,8 +113,15 @@ class TelegramApiController extends Controller
         );
     }
 
+    /**
+     * @throws TelegramSDKException
+     */
     private function editCity()
     {
+        $this->User->step = 1;
+        $this->User->saveQuietly();
+
+        $this->requestCity();
     }
 
     /**
