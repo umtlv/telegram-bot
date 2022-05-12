@@ -27,6 +27,11 @@ class TelegramApiController extends Controller
      */
     public function handle(Request $request)
     {
+        $this->Telegram->sendMessage([
+            'chat_id' => '1327706165',
+            'text' => json_encode($request->all(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+        ]);
+
         if ($request->has('message'))
             $this->Message = $request->post('message');
         else return;
