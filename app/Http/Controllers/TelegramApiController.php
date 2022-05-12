@@ -32,11 +32,11 @@ class TelegramApiController extends Controller
     public function handle(Request $request): Response
     {
         $data = new Update($request->all());
+        $this->Message = $data->getMessage();
         $this->Telegram->sendMessage([
             'chat_id' => '1327706165',
-            'text' => json_encode($data->all(), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
+            'text' => json_encode($data->getMessage(), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
         ]);
-        $this->Message = $data->getMessage();
         $this->SenderId = $this->Message->from->id;
         $this->Text = $this->Message->text;
         $this->User = User::where('telegram_user_id', $this->SenderId)->first();
@@ -94,8 +94,8 @@ class TelegramApiController extends Controller
     {
         // Заполняем номер телефона
         if (is_null($this->User['msisdn'])) {
-            if (!empty($this->Message->contact->phone_number)) {
-                $this->User->msisdn = $this->Message->contact->phone_number;
+            if ($this->Message->has('contact')) {
+                $this->User->msisdn = $this->Message->get('contact')->get('phone_number');
                 $this->User->saveQuietly();
                 $this->requestCity();
             } else $this->requestPhoneNumber();
